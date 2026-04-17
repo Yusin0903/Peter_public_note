@@ -5,7 +5,7 @@ slug: /
 
 # Peter's Tech Notes
 
-後端工程師的學習筆記，涵蓋 AWS、JavaScript/TypeScript、Kubernetes 和 Monitoring 等主題。
+後端工程師的學習筆記，涵蓋 AWS、JavaScript/TypeScript、Kubernetes、Monitoring、Database、Python、Keycloak 等主題。
 
 ## 章節說明
 
@@ -13,6 +13,11 @@ slug: /
 |------|------|
 | **AWS** | DynamoDB、SQS、EC2 vs 全託管服務等 |
 | **JavaScript / TypeScript** | 模組系統、非同步、連線池、EventEmitter 等 |
-| **Kubernetes** | Pod、Service、Ingress、CronJob 核心概念 |
-| **Monitoring** | Prometheus、VictoriaMetrics、Thanos、AMP 集中化監控方案 |
+| **Kubernetes & Docker** | Pod、Service、Ingress、CronJob、Docker 指令與 NVIDIA GPU 設定 |
+| **Monitoring** | Prometheus、VictoriaMetrics、Thanos、AMP 集中化監控方案、本地 docker-compose stack |
+| **Database** | Alembic、SQLAlchemy ORM、SQLite → PostgreSQL 遷移、PostgreSQL 注意事項 |
+| **Python** | Context Manager、Singleton 設計模式 |
+| **Keycloak** | HttpOnly Cookie、Refresh Token、SSO Session、RBAC 設計 |
+| **Linux** | chmod 權限說明 |
+| **FFmpeg** | 影片壓縮指令與參數 |
 | **MCP** | Model Context Protocol 使用記錄 |
