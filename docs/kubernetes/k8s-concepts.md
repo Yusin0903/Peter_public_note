@@ -83,6 +83,66 @@ curl http://my-service.my-namespace.svc.cluster.local:80
 
 ---
 
+## Workload 類型完整一覽
+
+| 類型 | 核心特性 | 典型用途 |
+|------|---------|---------|
+| **Deployment** | 無狀態，replicas 自由調整 | API server、web app、proxy |
+| **StatefulSet** | 有狀態，固定名字 + 固定 PVC | 資料庫、時序資料庫、Grafana |
+| **DaemonSet** | 每台 node 跑一個，node 增加自動擴展 | log agent、metrics exporter、node 層工具 |
+| **Job** | 跑完（exit 0）就停止，不重啟 | DB migration、一次性腳本 |
+| **CronJob** | 定時產生 Job | 定時備份、定時清理 |
+| **ReplicaSet** | 幾乎不直接用 | Deployment 底層自動建立，管 Pod 數量 |
+
+### 生命週期
+
+```
+Deployment / StatefulSet / DaemonSet → 一直跑，掛了自動重啟
+Job                                  → 跑完就停，不重啟
+CronJob                              → 定時產生 Job
+```
+
+### StatefulSet vs Deployment
+
+```
+Deployment（web-api、proxy）：
+  Pod-abc123 重啟 → 可能變成 Pod-xyz789（名字不固定）
+  掛在哪台 node 無所謂，沒有自己的硬碟
+
+StatefulSet（postgres、time-series-db）：
+  postgres-0 重啟 → 還是 postgres-0（名字固定）
+  有固定的 PVC，postgres-0 的 /data 永遠掛同一顆硬碟
+```
+
+### DaemonSet
+
+```
+# cluster 有 3 台 node
+
+Deployment replicas=2：           DaemonSet：
+  node-1: [api-server]             node-1: [log-agent]
+  node-2: [api-server]             node-2: [log-agent]
+  node-3: (空的)                   node-3: [log-agent]
+
+新 node-4 加入：
+  node-4: (不會自動加)              node-4: [log-agent] ← 自動！
+```
+
+適合「需要收集每台機器資料」的 agent，例如 log collector、node metrics exporter。
+
+### ReplicaSet — 為什麼不直接用
+
+```
+你建 Deployment
+  → Deployment 自動建 ReplicaSet
+  → ReplicaSet 管 Pod 數量
+
+直接建 ReplicaSet 缺少 rolling update、rollback 功能
+實務上只用 Deployment，不直接碰 ReplicaSet
+```
+
+---
+
 ## CronJob
 
 ```yaml
@@ -121,3 +181,112 @@ kubectl logs -l app=my-app --all-containers | grep "keyword"
 | 管理成本 | 要管 node、scaling、部署 | 幾乎不用管 |
 
 EKS = AWS 代管的 Kubernetes，幫你管 control plane，你只管 worker node 和部署。
+
+---
+
+## K8s Storage：StorageClass / PVC / PV
+
+### 三層關係
+
+```
+StorageClass（規格表）
+  → 定義「怎麼建磁碟」（type、provisioner、回收策略）
+  → 整個 cluster 只有幾個，所有 pod 共用
+
+PVC — PersistentVolumeClaim（申請單）
+  → Pod 說「我要一顆 500Gi 的 gp3 磁碟」
+  → 每個需要磁碟的 pod 各自一張
+
+PV — PersistentVolume（實際的磁碟）
+  → K8s 收到 PVC 後自動建立
+  → 對應到雲端的真實磁碟（AWS EBS、GCP PD 等）
+```
+
+### 類比
+
+```
+StorageClass = 餐廳菜單（定義有哪些選項）
+PVC = 點餐單（客人說：我要大份 500Gi）
+PV = 廚房做出來的那道菜（實際的 volume）
+```
+
+### StorageClass 範例
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+provisioner: ebs.csi.aws.com        # 誰建磁碟（AWS EBS CSI Driver）
+parameters:
+  type: gp3                          # 磁碟類型
+  fsType: ext4                       # 檔案系統
+volumeBindingMode: WaitForFirstConsumer  # 等 pod 排程後才建（確保同 AZ）
+allowVolumeExpansion: true           # 之後可以擴大，不需要重建
+reclaimPolicy: Retain                # pod 刪除後 volume 保留
+```
+
+### PVC 範例
+
+```yaml
+volumeClaimTemplate:
+  spec:
+    storageClassName: gp3        # 用哪個 StorageClass
+    resources:
+      requests:
+        storage: 500Gi           # 要多大
+```
+
+### 完整建立流程
+
+```
+1. StorageClass "gp3" 已建好
+
+2. Deployment/StatefulSet 宣告 PVC：storageClassName: gp3, storage: 500Gi
+
+3. K8s scheduler 把 pod 排到 node-1（某個 AZ）
+
+4. WaitForFirstConsumer → 現在才開始建 volume
+   K8s 看 PVC → 找到 StorageClass "gp3" → 呼叫 provisioner
+   → 在同一個 AZ 建立 500Gi 磁碟
+
+5. K8s 建立 PV，綁定 PVC ↔ PV ↔ 實際磁碟
+
+6. 磁碟掛載到 node → pod 可以讀寫
+```
+
+### 生命週期
+
+| 事件 | PVC | PV | 實際磁碟 |
+|---|---|---|---|
+| Pod 建立 | 建立 | 自動建立 | 自動建立 |
+| Pod 重啟 | 不變 | 不變 | 不變（資料保留） |
+| Pod 搬到其他 node（同 AZ） | 不變 | 不變 | detach + reattach |
+| Pod 刪除 | 刪除 | 看 reclaimPolicy | Retain → 保留 / Delete → 刪除 |
+
+### reclaimPolicy 差別
+
+```
+Retain  → pod 刪了磁碟還在，資料保留（適合資料庫、監控儲存）
+Delete  → pod 刪了磁碟也自動刪（適合暫時性 cache）
+```
+
+### volumeBindingMode 差別
+
+```
+Immediate           → PVC 建立時立刻建磁碟（可能跟 pod 不同 AZ → 掛載失敗）
+WaitForFirstConsumer → 等 pod 排程後才建（確保磁碟跟 pod 在同一個 AZ）
+```
+
+### 雲端磁碟 vs Node 本地磁碟
+
+```
+雲端磁碟（EBS / PD）= 獨立的網路磁碟
+  → node 刪了磁碟還在
+  → pod 搬到其他 node 可以重新掛載
+  → 適合需要持久化的資料
+
+Node 本地磁碟 = node 的 root disk
+  → node 刪了資料就沒了
+  → 適合暫時性 cache
+```

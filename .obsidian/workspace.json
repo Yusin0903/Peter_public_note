@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/intro.md",
+                "file": "docs/monitoring/monitoring-stack-decision.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "intro"
+              "title": "monitoring-stack-decision"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/intro.md",
+                "file": "docs/monitoring/monitoring-stack-decision.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for intro"
+              "title": "Backlinks for monitoring-stack-decision"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/intro.md",
+                "file": "docs/monitoring/monitoring-stack-decision.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from intro"
+              "title": "Outgoing links from monitoring-stack-decision"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/intro.md",
+                "file": "docs/monitoring/monitoring-stack-decision.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of intro"
+              "title": "Outline of monitoring-stack-decision"
             }
           }
         ]
@@ -185,42 +185,42 @@
   },
   "active": "2a6e3d01918b1551",
   "lastOpenFiles": [
-    "build/sitemap.xml",
-    "build/index.html",
-    "build/404.html",
-    "build/keycloak/keycloak-concepts/index.html",
-    "build/keycloak/keycloak-concepts",
-    "build/keycloak",
-    "build/python/singleton-pattern/index.html",
-    "build/python/context-manager/index.html",
-    "build/python/singleton-pattern",
-    "build/python/context-manager",
-    "build/python",
-    "docs/kubernetes/docker-tips.md",
-    "docs/monitoring/prometheus-docker-compose.md",
-    "docs/ffmpeg/compression.md",
-    "docs/linux/linux-permissions.md",
-    "docs/python/singleton-pattern.md",
-    "docs/python/context-manager.md",
-    "docs/keycloak/keycloak-concepts.md",
-    "docs/database/postgresql-notes.md",
-    "docs/database/sqlite-to-postgresql.md",
-    "docs/database/sqlalchemy-orm-cheatsheet.md",
-    "docs/database/alembic.md",
-    "node_modules/webpack/node_modules/ajv-keywords/keywords/dotjs/README.md",
-    "node_modules/webpack/node_modules/ajv/lib/dotjs/README.md",
-    "node_modules/url-loader/node_modules/ajv-keywords/keywords/dotjs/README.md",
-    "node_modules/url-loader/node_modules/ajv/lib/dotjs/README.md",
-    "node_modules/send/node_modules/debug/node_modules/ms/readme.md",
-    "node_modules/send/node_modules/debug/node_modules/ms/license.md",
-    "node_modules/null-loader/node_modules/ajv/lib/dotjs/README.md",
-    "node_modules/null-loader/node_modules/ajv-keywords/keywords/dotjs/README.md",
-    "node_modules/hpack.js/node_modules/readable-stream/doc/wg-meetings/2015-01-30.md",
-    "node_modules/file-loader/node_modules/ajv-keywords/keywords/dotjs/README.md",
-    "node_modules/file-loader/node_modules/ajv/lib/dotjs/README.md",
-    "node_modules/@types/serve-static/node_modules/@types/send/README.md",
-    "node_modules/@jsonjoy.com/util/node_modules/@jsonjoy.com/buffers/README.md",
-    "node_modules/@jsonjoy.com/json-pack/node_modules/@jsonjoy.com/buffers/README.md",
+    "build/en/sitemap.xml",
+    "build/en/index.html",
+    "build/en/monitoring/prometheus-docker-compose.html",
+    "build/en/monitoring/prometheus-glossary.html",
+    "build/en/python/context-manager.html",
+    "build/en/python/singleton-pattern.html",
+    "build/en/python",
+    "build/en/monitoring/glossary-and-data-definitions.html",
+    "build/en/monitoring/cost-analysis-centralized-monitoring.html",
+    "build/en/monitoring/decision-rejected-signoz.html",
+    "build/en/monitoring/monitoring-stack-decision.html",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/kubernetes/k8s-and-aws-glossary.md",
+    "docs/kubernetes/k8s-and-aws-glossary.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/monitoring/monitoring-stack-decision.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/kubernetes/k8s-deployment-tools.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/aws/nat-gateway-vs-transit-gateway.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/monitoring/prometheus-glossary.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/monitoring/prometheus-docker-compose.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/monitoring/glossary-and-data-definitions.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/monitoring/decision-rejected-signoz.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/monitoring/cost-analysis-centralized-monitoring.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/monitoring/centralized-monitoring-proposal.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/python/singleton-pattern.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/python/context-manager.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/mcp/mcp-problem-record.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/linux/linux-permissions.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/keycloak/keycloak-concepts.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/kubernetes/k8s-concepts.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/kubernetes/docker-tips.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/javascript/type-assertion-as-vs-pydantic.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/javascript/syntax-vs-python.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/javascript/spread-operator.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/javascript/promise-and-async-await.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/javascript/knex-and-read-write-splitting.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/javascript/export-import.md",
+    "i18n/en-US/docusaurus-plugin-content-docs/current/javascript/event-emitter.md",
     "node_modules/serve-index/public/icons/page_world.png",
     "node_modules/serve-index/public/icons/page_word.png",
     "node_modules/serve-index/public/icons/page_white_zip.png",
