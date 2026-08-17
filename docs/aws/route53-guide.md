@@ -5,6 +5,42 @@ sidebar_position: 8
 
 # Route53 / ACM / K8s Ingress — 完整關係解析
 
+## 一個請求的完整旅程
+
+假設瀏覽器打 `https://grafana-central.example.com`：
+
+```
+1. DNS 解析（Route53 的工作）
+   瀏覽器問：「grafana-central.example.com 的 IP 是？」
+   → Route53 查 example.com 這個 hosted zone
+   → 找到一筆 A/alias 記錄，回答：「去問 ALB xxx.elb.amazonaws.com」
+
+2. 連線與路由（ALB / NLB 的工作）
+   瀏覽器帶著 ALB 的位址去敲門
+   → ALB 收到 Host header 是 grafana-central.example.com
+   → 依照 Ingress 規則轉發到 Grafana Pod
+```
+
+**三個角色，各管各的，互不依賴對方才能「存在」**：
+
+| 角色 | 是什麼 | 管什麼 |
+|---|---|---|
+| **Route53 Hosted Zone** | 一本電話簿 | 「這個名字」對應「哪個位址」——純查詢服務，本身不轉發任何流量 |
+| **A / Alias record** | 電話簿裡的一行 | Zone 裡具體一筆對應關係 |
+| **ALB / NLB** | 真正在路上收信、轉信的郵局 | 收到連線後決定轉去哪個 Pod/Service，跟 DNS 完全無關 |
+
+### 沒有域名，ALB/NLB 一樣能用
+
+ALB/NLB 建立時 AWS 就給了一個原生 DNS 名字（例如 `internal-alb-xxx.us-east-1.elb.amazonaws.com`），這個名字**不需要 Route53** 就能被解析——AWS 自己的 DNS 系統負責。
+
+Route53 的 record 存在的唯一目的，是幫這串醜名字取一個好記的別名。**沒有 record，ALB 一樣健康運作、一樣能被連到**，只是你得用那串醜名字連。這也是為什麼「忘記加 Route53 record」不會讓 ALB 掛掉——ALB 沒事，只是沒人能用好記的域名找到它。
+
+### ACM cert validation 也是同一個道理
+
+ACM 要證明「你有權管理這個域名」，做法是要求你在對應的 hosted zone 裡放一筆特定的驗證記錄。如果這個域名的 zone 不在你能操作的帳號裡（見下方「跨帳號」章節），你的 Terraform/Console 沒辦法自己放這筆記錄——cert 永遠卡在 pending validation。
+
+---
+
 ## 這三個東西各自在幹嘛
 
 ```
@@ -312,6 +348,46 @@ aws route53 associate-vpc-with-hosted-zone \
 Internal NLB 的 auto-generated DNS（如 `k8s-xxx.elb.us-east-1.amazonaws.com`）只能在**它所在的 VPC** 內解析。跨 VPC 即使有 TGW，DNS 也不會自動通。
 
 解法：在 PHZ 加一筆 CNAME 指向 NLB DNS name，讓關聯的 VPC 都能解析。
+
+---
+
+## Route53 是帳號層級資源，不是全域共享的電話簿
+
+Route53 本身是「全球服務」（不分 region，見上方 Console 操作一律用同一個 endpoint），但**每個 AWS 帳號的 Route53 是彼此獨立的**。帳號 A 建的 hosted zone，帳號 B 完全查不到，除非明確做跨帳號授權（類似上面 PHZ 跨帳號 associate 的模式，但 public zone 通常是走 zone delegation：帳號 B 在自己的 zone 裡加一筆 NS record 指到帳號 A 的 zone）。
+
+### 一個真實會踩到的情境
+
+Terraform 裡有一個 `data "aws_route53_zone"` 或 `data "aws_route53_zone" "parent"` 之類的 data source，用 `root_domain` 變數查 zone：
+
+```hcl
+data "aws_route53_zone" "parent" {
+  name = var.root_domain   # 例如 "prod.example.com"
+}
+```
+
+這個 data source 用的是**當前 provider 認證的那個帳號**去查。如果你想用來建 cert 的域名（例如 `grafana.other-brand.example.com`）實際 zone 存在於**另一個帳號**，即使域名看起來像是同一個公司的同一套命名規則，`aws_route53_zone` 一樣查不到——會直接報錯「zone not found」，或更隱蔽地，如果 code 剛好也建了 `other-brand.example.com` 這個 zone 名字在**這個帳號**（同名但不同帳號的兩個獨立 zone），查詢會成功但查到的是**錯的那個 zone**，導致：
+
+- ACM cert 的 DNS validation record 被寫進錯的 zone → cert 永遠 pending，因為公開解析走的是另一個帳號的真正 zone。
+- Alias A record 建在錯的 zone 裡 → 用戶端解析走的是另一個帳號的 zone，永遠看不到你剛建的這筆記錄。
+
+### 怎麼判斷是不是踩到這個坑
+
+先查你要用的域名，zone 到底存在哪個帳號：
+
+```bash
+# 在你以為的目標帳號查
+aws route53 list-hosted-zones --query "HostedZones[].Name" --output text
+
+# 沒看到預期的域名？→ 這個域名的 zone 在別的帳號
+```
+
+如果 zone 真的在別的帳號，選項：
+
+1. **改用當前帳號已有的域名**——最簡單，不用跨帳號協調。
+2. **跨帳號委派（delegation）**：在當前帳號建一個子域名 zone（如 `sub.prod.example.com`），在域名真正的 owner 帳號裡加一筆 NS record 指過來，之後這個子域名的查詢會被轉發到你的帳號處理。
+3. **請 zone owner 帳號的人幫忙代放 validation record / alias record**——不用委派整個 zone，只是單筆記錄借用對方的管理權限。
+
+「這幾個帳號名字聽起來像同一個系統」不代表 Route53 zone 互通——**Route53 沒有『同公司自動信任』這種機制，帳號邊界永遠是硬邊界**，除非你明確設定委派或授權。
 
 ---
 

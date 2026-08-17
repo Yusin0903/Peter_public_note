@@ -40,6 +40,8 @@ const sidebars = {
         'devops/terraform/import-vs-git-push-pull',
       
         'devops/terraform/outputs-and-remote-state',
+      
+        'devops/terraform/top-level-blocks',
       ],
     },
     {
@@ -79,6 +81,8 @@ const sidebars = {
         'kubernetes/k8s-glossary',
         'kubernetes/k8s-deployment-tools',
         'docker/docker-tips',
+      
+        'kubernetes/kubectl-eks-auth-chain-debug',
       ],
     },
     {
